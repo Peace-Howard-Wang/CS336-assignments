@@ -201,10 +201,10 @@ if __name__ == '__main__':
     vocab, merges = train_bpe(input_path, 1000, ["<|endoftext|>"], True)
     name = input_path.split("/")[-1].replace("txt", "pkl")
     # 保存
-    with open("vocab_" + name, "wb") as f:
+    with open("../data/vocab_" + name, "wb") as f:
         pickle.dump(vocab, f)
 
-    with open("merges_" + name,"wb") as f:
+    with open("../data/merges_" + name,"wb") as f:
         pickle.dump(merges, f)
 
     # with open("vocab_TinyStoriesV2-GPT4-train.pkl", "rb") as f:
