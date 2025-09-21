@@ -1,9 +1,13 @@
-import collections
 import pickle
 from typing import Iterable
 
-import numpy as np
 import regex as re
+import pickle
+from typing import Iterable
+
+import regex as re
+
+
 class Tokenizer:
     def __init__(self, vocab: dict[int, bytes], merges: list[tuple[bytes, bytes]], special_tokens: list[str] | None = None):
         self.vocab = vocab
@@ -105,19 +109,19 @@ class Tokenizer:
         text = b"".join(self.vocab[i] for i in ids)
         return text.decode("utf-8", errors="replace")
 
-# if __name__ == '__main__':
-#     from tqdm import tqdm
-#     import numpy as np
-#
-#     tokenizer = Tokenizer.from_files(
-#         "vocab_TinyStoriesV2-GPT4-train.pkl",
-#         "merges_TinyStoriesV2-GPT4-train.pkl",
-#         ["<|endoftext|>"]
-#     )
-    #
-    # buffer = []
-    # batch_size = 65536
-    #
+if __name__ == '__main__':
+    from tqdm import tqdm
+    import numpy as np
+
+    tokenizer = Tokenizer.from_files(
+        "../data/vocab_TinyStoriesV2-GPT4-train.pkl",
+        "../data/merges_TinyStoriesV2-GPT4-train.pkl",
+        ["<|endoftext|>"]
+    )
+
+    buffer = []
+    batch_size = 65536
+
     # # 先统计总行数，用于 tqdm 显示百分比（可选）
     # with open("../data/TinyStoriesV2-GPT4-train.txt", "r", encoding="utf-8") as f:
     #     total_lines = sum(1 for _ in f)
@@ -136,11 +140,11 @@ class Tokenizer:
     #     # 写入剩余 token
     #     if buffer:
     #         np.array(buffer, dtype=np.uint16).tofile(dest)
-    # with open("../data/TinyStoriesV2-GPT4-train_tokens.bin", "rb") as f:
-    #     while True:
-    #         chunk_bytes = f.read(65536 * 2)  # 每个 token 2 字节
-    #         if not chunk_bytes:
-    #             break
-    #         token_ids = np.frombuffer(chunk_bytes, dtype=np.uint16)
-    #         text = tokenizer.decode(token_ids.tolist())
-    #         print(text)
+    with open("../data/TinyStoriesV2-GPT4-valid_tokens.bin", "rb") as f:
+        while True:
+            chunk_bytes = f.read(65536 * 2)  # 每个 token 2 字节
+            if not chunk_bytes:
+                break
+            token_ids = np.frombuffer(chunk_bytes, dtype=np.uint16)
+            text = tokenizer.decode(token_ids.tolist())
+            print(text)

@@ -5,8 +5,6 @@ import typing
 import numpy as np
 import torch
 
-from cs336_basics.modules.functions import softmax
-
 """
     logits: [batch, vocab_size]
     targets:[batch]
