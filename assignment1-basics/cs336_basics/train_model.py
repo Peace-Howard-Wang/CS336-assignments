@@ -3,10 +3,11 @@ import math
 
 import numpy as np
 import torch
-
+import time
+import datetime
 from cs336_basics.modules.transfomer import TransformerLM
 from cs336_basics.train.optimizer import AdamW, lr_cosine_schedule
-from cs336_basics.train.utils import get_batch, cross_entropy, save_checkpoint, gradient_clipping
+from cs336_basics.train.utils import get_batch, cross_entropy, save_checkpoint, gradient_clipping, load_checkpoint
 
 
 def parse_args():
@@ -45,7 +46,38 @@ def build_model_optimizer(args):
                           context_length=512,
                           num_layers=args.num_layers)
     optimizer = AdamW(list(model.parameters()), lr=args.lr)
+    # num_params = sum(p.numel() for p in model.parameters())
+    # print(f"模型参数总数: {num_params / 1e6:.2f}M")
+    # num_cal = 20000 * args.d_model + args.num_layers*(4*args.d_model**2 + 3*args.d_model*d_ff)
+    # print(f"分析计算参数的总数为： {num_cal /1e6:.2f}M")
     return model, optimizer
+
+from tqdm import tqdm
+
+def evaluate(checkpoint_path, val_path):
+    args = parse_args()
+    model, optimizer = build_model_optimizer(args)
+    load_checkpoint(checkpoint_path, model, optimizer)
+    val_dataset = load_dataset(val_path)
+    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    model.to(device)
+    model.eval()
+
+    total_loss, total_count = 0.0, 0
+    num_batches = len(val_dataset) // args.batch_size // 100
+
+    with torch.no_grad():
+        for _ in tqdm(range(num_batches), desc="Evaluating", unit="batch"):
+            x_batch, y_batch = get_batch(val_dataset, args.batch_size, context_length=128, device=device)
+            y_hat = model(x_batch)
+            loss = cross_entropy(y_hat, y_batch)
+            total_loss += loss.item() * x_batch.size(0)
+            total_count += x_batch.size(0)
+
+    avg_loss = total_loss / total_count
+    perplexity = np.exp(avg_loss)
+    print(f"\nValidation Loss: {avg_loss:.4f}")
+    print(f"Perplexity: {perplexity:.4f}")
 
 def train(args):
     model, optimizer = build_model_optimizer(args)
@@ -54,9 +86,13 @@ def train(args):
     device = "mps"
     model.to(device)
     iteration = 0
+
     for epoch in range(args.epochs):
+        epoch_start = time.time()  # 记录epoch开始时间
         num_batches = len(train_dataset) // args.batch_size
         for _ in range(num_batches):
+            iter_start = time.time()  # 记录iteration开始时间
+
             x_batch, y_batch = get_batch(train_dataset, batch_size=args.batch_size, context_length=256, device=device)
             optimizer.zero_grad()
             y_hat = model(x_batch)
@@ -69,17 +105,29 @@ def train(args):
             gradient_clipping(model.parameters(),1.0)
             optimizer.step()
             iteration += 1
-            if iteration % args.log_interval == 0:
-                print(f"Epoch {epoch} Iter {iteration} Loss {loss.item():.4f}")
-            if iteration % args.save_interval == 0:
-                checkpoint_path = f"{args.checkpoint_dir}/checkpoint_{iteration}.pt"
-                save_checkpoint(model, optimizer, iteration, checkpoint_path)
 
+            if iteration % args.log_interval == 0:
+                iter_end = time.time()
+                elapsed = iter_end - iter_start
+                now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"[{now}] Epoch {epoch} Iter {iteration} Loss {loss.item():.4f} Time per iter: {elapsed:.2f}s")
+
+        epoch_end = time.time()
+        epoch_elapsed = epoch_end - epoch_start
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{now}] Epoch {epoch} completed in {epoch_elapsed:.2f}s")
+
+        # 验证
         with torch.no_grad():
+            val_start = time.time()
             x_val, y_val = get_batch(valid_dataset, batch_size=args.batch_size, context_length=512, device=device)
             y_val_hat = model(x_val)
             val_loss = cross_entropy(y_val_hat, y_val)
-            print(f"Epoch {epoch} Validation Loss {val_loss.item():.4f}")
+            val_end = time.time()
+            val_elapsed = val_end - val_start
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"[{now}] Epoch {epoch} Validation Loss {val_loss.item():.4f} Time: {val_elapsed:.2f}s")
 if __name__ == "__main__":
-    args = parse_args()
-    train(args)
+    # args = parse_args()
+    # train(args)
+    evaluate("/Users/wanghao/PycharmProjects/CS336/assignment1-basics/checkpoints/checkpoint_iter_120000.pt", "./data/TinyStoriesV2-GPT4-valid_tokens.bin")
