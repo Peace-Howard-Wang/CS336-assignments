@@ -5,9 +5,9 @@ import numpy as np
 import torch
 import time
 import datetime
-from cs336_basics.modules.transfomer import TransformerLM
+from cs336_basics.model import TransformerLM
 from cs336_basics.optimizer import AdamW, lr_cosine_schedule
-from cs336_basics.train.utils import get_batch, cross_entropy, gradient_clipping, load_checkpoint
+from cs336_basics.utils import get_batch, cross_entropy, gradient_clipping, load_checkpoint
 
 
 def parse_args():
@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--log_interval', type=int, default=100)
     parser.add_argument('--save_interval', type=int, default=500)
+    parser.add_argument('--device', type='str', default='cpu')
     return parser.parse_args()
 
 def load_dataset(path, dtype=np.uint16):
@@ -83,8 +84,7 @@ def train(args):
     model, optimizer = build_model_optimizer(args)
     train_dataset = load_dataset(args.train_path)
     valid_dataset = load_dataset(args.val_path)
-    device = "mps"
-    model.to(device)
+    model.to(args.device)
     iteration = 0
 
     for epoch in range(args.epochs):
@@ -93,7 +93,7 @@ def train(args):
         for _ in range(num_batches):
             iter_start = time.time()  # 记录iteration开始时间
 
-            x_batch, y_batch = get_batch(train_dataset, batch_size=args.batch_size, context_length=256, device=device)
+            x_batch, y_batch = get_batch(train_dataset, batch_size=args.batch_size, context_length=256, device=args.device)
             optimizer.zero_grad()
             y_hat = model(x_batch)
             loss = cross_entropy(y_hat, y_batch)
@@ -120,7 +120,7 @@ def train(args):
         # 验证
         with torch.no_grad():
             val_start = time.time()
-            x_val, y_val = get_batch(valid_dataset, batch_size=args.batch_size, context_length=512, device=device)
+            x_val, y_val = get_batch(valid_dataset, batch_size=args.batch_size, context_length=512, device=args.device)
             y_val_hat = model(x_val)
             val_loss = cross_entropy(y_val_hat, y_val)
             val_end = time.time()
