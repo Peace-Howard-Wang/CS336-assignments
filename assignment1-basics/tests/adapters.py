@@ -3,22 +3,23 @@ from __future__ import annotations
 import os
 from collections.abc import Iterable
 from typing import IO, Any, BinaryIO
-from torch.nn import Module
 import numpy.typing as npt
 import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
-from cs336_basics.modules.RMSNorm import RMSNorm
-from cs336_basics.modules.RoPE import RotaryPositionalEmbedding
-from cs336_basics.modules.SWiGLU import SWiGLU, silu
-from cs336_basics.modules.embedding import Embedding
-from cs336_basics.modules.functions import softmax, scaled_dot_product_attention
-from cs336_basics.modules.linear import Linear
-from cs336_basics.modules.multihead_self_attention import MultiheadSelfAttention
-from cs336_basics.modules.transfomer import TransformerBlock, TransformerLM
-from cs336_basics.train.optimizer import AdamW, lr_cosine_schedule
-from cs336_basics.train.utils import cross_entropy, gradient_clipping, get_batch, save_checkpoint, load_checkpoint
+from cs336_basics.model import RMSNorm
+from cs336_basics.model import RotaryPositionalEmbedding
+from cs336_basics.model import SWiGLU
+from cs336_basics.utils import silu
+from cs336_basics.model import Embedding
+from cs336_basics.utils import softmax
+from cs336_basics.model import scaled_dot_product_attention
+from cs336_basics.model import Linear
+from cs336_basics.model import MultiheadSelfAttention
+from cs336_basics.model import TransformerBlock, TransformerLM
+from cs336_basics.optimizer import AdamW, lr_cosine_schedule
+from cs336_basics.utils import cross_entropy, gradient_clipping, get_batch, save_checkpoint, load_checkpoint
 from cs336_basics.train_bpe import train_bpe
 from cs336_basics.tokenzier import Tokenizer
 

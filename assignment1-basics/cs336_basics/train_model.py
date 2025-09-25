@@ -6,8 +6,8 @@ import torch
 import time
 import datetime
 from cs336_basics.modules.transfomer import TransformerLM
-from cs336_basics.train.optimizer import AdamW, lr_cosine_schedule
-from cs336_basics.train.utils import get_batch, cross_entropy, save_checkpoint, gradient_clipping, load_checkpoint
+from cs336_basics.optimizer import AdamW, lr_cosine_schedule
+from cs336_basics.train.utils import get_batch, cross_entropy, gradient_clipping, load_checkpoint
 
 
 def parse_args():

@@ -1,9 +1,17 @@
+import torch
 import math
 import os
 import typing
-
 import numpy as np
-import torch
+
+
+def silu(x: torch.Tensor)->torch.Tensor:
+    return x*torch.sigmoid(x)
+
+def softmax(x: torch.Tensor, dim=-1)->torch.Tensor:
+    x = x - torch.max(x, dim=dim, keepdim=True).values
+    e = torch.exp(x)
+    return e/torch.sum(e, dim=dim, keepdim=True)
 
 """
     logits: [batch, vocab_size]
@@ -50,8 +58,9 @@ def save_checkpoint(model: torch.nn.Module, optimizer: torch.optim.Optimizer, it
     }
     torch.save(checkpoint, out)
 
-def load_checkpoint(src:str|os.PathLike|typing.BinaryIO|typing.IO[bytes], model: torch.nn.Module, optimizer:torch.optim.Optimizer):
-    checkpoint = torch.load(src, map_location="mps")
-    model.load_state_dict(checkpoint["model_state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+def load_checkpoint(src:str|os.PathLike|typing.BinaryIO|typing.IO[bytes], model: torch.nn.Module, optimizer:torch.optim.Optimizer, map_location:str="mps")->int:
+    checkpoint = torch.load(src, map_location=map_location)
+    model.load_state_dict(checkpoint["model_state"])
+    optimizer.load_state_dict(checkpoint["optimizer_state"])
     return checkpoint["iteration"]
+
