@@ -1,7 +1,10 @@
-import re
-import os
 import hashlib
+import os
+import random
+import re
+import unicodedata
 from collections import defaultdict
+
 import fasttext
 from resiliparse.extract.html2text import extract_plain_text
 from resiliparse.parse.encoding import detect_encoding
@@ -138,12 +141,7 @@ def exact_line_deduplication(input_paths, output_dir):
                     f_out.write(line)
 
 
-import os
-import re
-import unicodedata
-import hashlib
-import random
-from collections import defaultdict
+
 
 # ---------------- 工具函数 ---------------- #
 
